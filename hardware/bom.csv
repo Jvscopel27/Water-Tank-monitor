@@ -1,0 +1,22 @@
+Referencia;Quantidade;Componente;Especificacao;Estado
+U1;1;Placa ESP32;DevKit ESP32-WROOM-32 classico;Confirmar modelo comprado e regulador
+U2;1;Turbidez;Modulo e sonda analogicos 5 V;Confirmar modelo e saida
+U3;1;pH;PH4502C com eletrodo BNC;Confirmar pinagem e especificacoes
+U4;1;TDS;Modulo compativel com alimentacao 3,3 V e saida 0-2,3 V;Confirmar modelo
+U5;1;Temperatura;DS18B20 encapsulado de tres fios;Confirmar pinagem
+U6;1;Display;OLED SSD1306 I2C quatro pinos compativel com 3,3 V;Confirmar pull-ups
+R1 R3;2;Resistor;15 kohm 1% 1/4 W;Divisores
+R2 R4;2;Resistor;10 kohm 1% 1/4 W;Divisores
+R5;1;Resistor;1 kohm 1% 1/4 W;Filtro TDS
+R6;1;Resistor;4,7 kohm 1% 1/4 W;Pull-up DS18B20
+R7 R8;2;Resistor opcional;4,7 kohm 1% 1/4 W;Nao montar se pull-ups existentes forem adequados
+C1 C2 C3;3;Capacitor ceramico;100 nF 16 V ou superior;Filtro ADC
+C4;1;Capacitor eletrolitico;100 uF 16 V;Respeitar polaridade
+C5 C6 C7 C8 C9;5;Capacitor ceramico;100 nF 16 V ou superior;Desacoplamento local
+F1;1;Fusivel e porta-fusivel;1 A retardado com especificacao adequada a CC;Provisorio confirmar partida e cabos
+S1;1;Chave liga/desliga;Minimo 1 A em 5 Vcc;Confirmar corrente total
+PS1;1;Fonte isolada regulada;5 V 3 A;Adaptador de saida para distribuicao em baixa tensao
+J;1 conjunto;Bornes cabos e conectores;Polarizados e identificados;Definir conforme modulos reais
+PROTO;2;Protoboard;400 pontos;Confirmar espaco e continuidade das barras
+BOX;1;Caixa e fixadores;Montagem seca protegida contra respingos;Dimensionar apos receber componentes
+CAL;1 conjunto;Referencias de calibracao;Tampoes pH KCl e referencia de condutividade;Selecionar conforme sondas e metodo validado

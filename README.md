@@ -87,6 +87,8 @@ A meta dos ensaios é atualizar o painel e o display a cada **5 segundos**, resp
 
 ## Tecnologias e componentes
 
+O [projeto elétrico de referência](hardware/README.md) reúne o mapa de conexões, a pinagem, o dimensionamento e a lista de materiais do protótipo. A revisão é preliminar e depende da confirmação dos módulos comprados e de ensaios de bancada.
+
 **A preencher durante a implementação.**
 
 Esta seção reunirá as escolhas efetivamente utilizadas e validadas pela equipe.
