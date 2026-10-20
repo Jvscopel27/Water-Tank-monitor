@@ -7,6 +7,7 @@
 ![Status: em desenvolvimento](https://img.shields.io/badge/status-em_desenvolvimento-0284C7?style=flat-square)
 ![Projeto acadêmico](https://img.shields.io/badge/projeto-acad%C3%AAmico-0F766E?style=flat-square)
 ![Escopo: protótipo de bancada](https://img.shields.io/badge/escopo-prot%C3%B3tipo_de_bancada-475569?style=flat-square)
+[![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-16A34A?style=flat-square)](LICENSE)
 
 [Sobre](#sobre-o-projeto) · [Funcionalidades](#funcionalidades-planejadas) · [Primeiros passos](#primeiros-passos) · [Contribuição](#como-contribuir) · [Equipe](#equipe)
 
@@ -188,4 +189,4 @@ Para dúvidas sobre o projeto, utilize as [issues do repositório](https://githu
 
 ## Licença
 
-**A definir pela equipe.** O repositório ainda não possui um arquivo `LICENSE`. Após a escolha da licença, esta seção será atualizada com o texto e o link correspondentes.
+Este projeto está licenciado sob a **Licença MIT**. Consulte o arquivo [LICENSE](LICENSE) para conhecer os termos.
