@@ -1,0 +1,39 @@
+name: Water Tank Monitor - aquisicao e falha
+version: 1
+author: Water Tank Monitor
+steps:
+  - wait-serial: "OLED_OK"
+  - wait-serial: "LEITURA_OK"
+  - set-control:
+      part-id: temperature
+      name: temperature
+      value: 30
+  - wait-serial: "t=30.00"
+  - set-control:
+      part-id: ph
+      name: position
+      value: 0
+  - wait-serial: "ph=0.00"
+  - set-control:
+      part-id: turbidity
+      name: position
+      value: 0
+  - wait-serial: "turb_rel=0.0"
+  - set-control:
+      part-id: ec
+      name: position
+      value: 0
+  - wait-serial: "ec_sim=0"
+  - set-control:
+      part-id: failure
+      name: pressed
+      value: 1
+  - wait-serial: "MEDICAO_INDISPONIVEL motivo=falha_simulada"
+  - set-control:
+      part-id: failure
+      name: pressed
+      value: 0
+  - wait-serial: "LEITURA_OK"
+  - take-screenshot:
+      part-id: oled
+      save-to: oled-test.png

@@ -1,0 +1,6 @@
+**/.pio/
+**/.vscode/
+**/*.ino.cpp
+**/serial.log
+**/oled-test.png
+build/
