@@ -224,7 +224,7 @@ Sequência planejada de entregas, sem indicação de conclusão:
 
 ## Frame
 ![Carcaça inicial do modelo do produto](FRame/prototipo.png)
-![Carcaça inicial do modelo do produto](FRame/Prototipo1.pdf)
+![Desenho técnico do modelo 3D do produto](FRame/Prototipo1.pdf)
 
 ## Como contribuir
 
