@@ -12,7 +12,7 @@
 ![ESP32](https://img.shields.io/badge/placa-ESP32--WROOM--32-E7352C?style=flat-square&logo=espressif)
 [![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-16A34A?style=flat-square)](LICENSE)
 
-[Sobre](#sobre-o-projeto) · [Funcionalidades](#funcionalidades-planejadas) · [Primeiros passos](#primeiros-passos) · [Contribuição](#como-contribuir) · [Equipe](#equipe)
+[Sobre](#sobre-o-projeto) · [Funcionalidades](#funcionalidades-planejadas) · [Primeiros passos](#primeiros-passos)· [Frame](#frame) · [Contribuição](#como-contribuir) · [Equipe](#equipe)
 
 </div>
 
@@ -221,6 +221,9 @@ Sequência planejada de entregas, sem indicação de conclusão:
 - [ ] Entregar código, manual, relatório de calibração e demonstração.
 
 **Período previsto no planejamento:** 5 de outubro a 1º de dezembro de 2026.
+
+## Frame
+
 
 ## Como contribuir
 
