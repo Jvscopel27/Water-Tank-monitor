@@ -1,7 +1,5 @@
 # Decisões propostas para aprovação
 
-Esta revisão é local. **Não fazer commit nem push antes da validação de João Vitor.**
-
 ## Ferramentas e motivos
 
 | Escolha | Como funciona | Por que usar neste projeto |
@@ -36,17 +34,5 @@ O novo sketch `firmware/WaterTankMonitor/WaterTankMonitor.ino` reaproveita a pin
 - Faixas experimentais definidas pelo operador e alerta após três leituras consecutivas fora delas.
 - Medições antigas não entram nas novas médias. Alterar calibração/faixas limpa o histórico para não misturar critérios.
 
-## Escolhas que dependem especialmente da aprovação
-
-1. **Duas versões de código:** demonstração e bancada. Misturar as escalas artificiais do Wokwi com o firmware físico produziria resultados enganosos.
-2. **EC como aproximação local:** o TDS V1.0 não é assumido como medidor EC calibrado. A conversão proposta é linear dentro dos pontos efetivamente ensaiados e só é aceita com temperatura entre 24,5 e 25,5 °C. É necessário verificar uma referência independente nessa faixa. Para outras temperaturas ou uma curva não linear, a conversão deverá ser revista.
-3. **Faixas sem valores padrão:** os limites de comparação devem vir dos ensaios do projeto. Nenhum limite sanitário foi atribuído ao equipamento.
-4. **Administração local:** comandos de calibração e sessão podem ser enviados pelo painel com a senha da rede, evitando a necessidade de conectar USB e fonte externa simultaneamente. A consulta é disponível a quem já estiver na rede. Não há acesso pela internet.
-5. **Atualização de cinco segundos e três leituras para persistência:** reduzem a sensibilidade a uma única leitura discrepante. O período precisa ser compatível com a estabilização das sondas nos ensaios.
-6. **Sem alegação de “100% pronto”:** o código pode ser compilado e revisado; precisão, imunidade a interferência, estabilidade por 24 h e materiais ainda dependem de montagem e medição reais.
-
-## Publicação proposta
-
-Após aprovação, publicar primeiro a documentação da stack, imagens e demonstração organizada; depois o firmware de bancada, manual e verificações. Nenhuma dependência compilada, senha de equipamento, diretório `.pio` ou binário de teste deve entrar no Git.
 
 Fontes: [instalação oficial do ESP32](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html), [ADC](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html), [Wi-Fi](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/wifi.html), [Preferences](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/preferences.html), [SSD1306](https://github.com/adafruit/Adafruit_SSD1306), [DallasTemperature](https://github.com/milesburton/Arduino-Temperature-Control-Library).
