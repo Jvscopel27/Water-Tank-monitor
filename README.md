@@ -105,6 +105,14 @@ Os badges de tecnologias serão adicionados após a confirmação dessas escolha
 
 ## Primeiros passos
 
+### Demonstração no Wokwi
+
+![Circuito virtual do Water Tank Monitor no Wokwi](hardware/Circuito%20%282%29.png)
+
+*Montagem no Wokwi: ESP32, OLED, DS18B20 e três controles que representam turbidez, pH e condutividade.*
+
+Na montagem virtual, os controles permitem representar diferentes leituras dos sensores. O botão vermelho foi previsto para demonstrar uma falha de medição. Esta imagem apresenta as conexões; a execução do programa no simulador ainda precisa ser validada.
+
 ### Pré-requisitos
 
 Para obter uma cópia do repositório, tenha o **Git** instalado.
