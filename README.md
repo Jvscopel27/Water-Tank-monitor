@@ -145,11 +145,11 @@ Os títulos dos anúncios identificam as famílias dos módulos; a ordem dos pin
 
 *Montagem no Wokwi: ESP32, OLED, DS18B20 e três controles que representam turbidez, pH e condutividade.*
 
-Na montagem virtual, os controles permitem representar diferentes leituras dos sensores. O bot?o vermelho foi previsto para demonstrar uma falha de medi??o. Esta imagem apresenta as conex?es.
+Na montagem virtual, os controles permitem representar diferentes leituras dos sensores. O botão vermelho foi previsto para demonstrar uma falha de medição. Esta imagem apresenta as conexões.
 
-[Abrir o guia da simula??o](simulation/wokwi/README.md). A captura abaixo, fornecida pela equipe, mostra a demonstra??o exibindo valores simulados; n?o substitui os testes da vers?o f?sica.
+[Abrir o guia da simulação](simulation/wokwi/README.md). A captura abaixo, fornecida pela equipe, mostra a demonstração exibindo valores simulados; não substitui os testes da versão física.
 
-![Display da demonstra??o no Wokwi](hardware/Tela%20OLED.png)
+![Display da demonstração no Wokwi](hardware/Tela%20OLED.png)
 
 ### Pré-requisitos
 
