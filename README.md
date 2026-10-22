@@ -184,8 +184,8 @@ Ao registrar resultados, identifique claramente dados simulados, leituras reais 
 | Integrante | Contato |
 | :--- | :--- |
 | João Vitor Scopel | [GitHub — @Jvscopel27](https://github.com/Jvscopel27) |
-| Isabela Freitas | A adicionar. |
-| Davi Saad | A adicionar. |
+| Isabela Freitas | [GitHub — @isabelafreitas123-ufes](https://github.com/isabelafreitas123-ufes) |
+| Davi Saad | [GitHub — @davisaad-bot](https://github.com/davisaad-bot) |
 
 Para dúvidas sobre o projeto, utilize as [issues do repositório](https://github.com/Jvscopel27/Water-Tank-monitor/issues).
 
