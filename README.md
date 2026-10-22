@@ -223,7 +223,8 @@ Sequência planejada de entregas, sem indicação de conclusão:
 **Período previsto no planejamento:** 5 de outubro a 1º de dezembro de 2026.
 
 ## Frame
-![Display da demonstração no Wokwi](FRame/prototipo.png)
+![Carcaça inicial do modelo do produto](FRame/prototipo.png)
+![Carcaça inicial do modelo do produto](FRame/prototipo1.pdf)
 
 ## Como contribuir
 
