@@ -35,6 +35,7 @@ struct Reading {
 };
 struct Minute {
   uint64_t stamp = 0;
+  uint8_t simulatedMask = 0;
   float sum[4] = {};
   uint16_t count[4] = {};
 };

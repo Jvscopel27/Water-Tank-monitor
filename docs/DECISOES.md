@@ -1,4 +1,6 @@
-# Decisões propostas para aprovação
+# Decisões técnicas e ferramentas
+
+O [guia do código](COMO_O_CODIGO_FUNCIONA.md) explica a implementação passo a passo. O [manual do painel](PAINEL.md) detalha gráficos, configurações persistentes, calibração guiada e PDF.
 
 ## Ferramentas e motivos
 
@@ -19,18 +21,18 @@
 | PlatformIO, opcional | Compila por comando usando versões fixas do core e das bibliotecas. | Foi usado como ferramenta auxiliar de verificação, aproveitando o compilador instalado. Não substitui a Arduino IDE escolhida para o trabalho diário. |
 | Git/GitHub | Mantêm o histórico de alterações e a documentação compartilhada. | Cada conjunto de mudanças terá explicação e aprovação antes de commit/push. |
 
-## O que muda no código
+## Organização do código
 
 O sketch em `simulation/wokwi/sketch/sketch.ino` é preservado como demonstração. Corrigimos o caminho de compilação e a seleção dos arquivos no ambiente opcional do PlatformIO, pois o sketch foi organizado numa subpasta compatível com Arduino IDE.
 
-O novo sketch `firmware/WaterTankMonitor/WaterTankMonitor.ino` reaproveita a pinagem e as bibliotecas de aquisição/display, mas implementa o comportamento da placa real:
+O sketch `firmware/WaterTankMonitor/WaterTankMonitor.ino` reaproveita a pinagem e as bibliotecas de aquisição/display, mas implementa o comportamento da placa real:
 
 - Conversão para milivolts pelo ADC, sem tratar potenciômetros como sondas calibradas.
 - Calibração local por dois pontos, confirmação de verificação e bloqueio de extrapolação.
 - Sessão de amostras com prazo; resultados antigos preservados com idade e estado explícitos.
 - Aquisição a cada cinco segundos, conversão de temperatura sem espera bloqueante e funcionamento independente da página aberta.
 - Painel local, senha gerada na primeira inicialização e configurações preservadas em NVS.
-- Histórico de médias válidas, contagem de amostras por canal e exportação JSON.
+- Histórico de médias válidas, contagem de amostras por canal e exportação PDF no navegador (JSON permanece na API).
 - Faixas experimentais definidas pelo operador e alerta após três leituras consecutivas fora delas.
 - Medições antigas não entram nas novas médias. Alterar calibração/faixas limpa o histórico para não misturar critérios.
 

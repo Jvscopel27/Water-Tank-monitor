@@ -2,225 +2,124 @@
 
 # 💧 Water Tank Monitor
 
-**Monitoramento de parâmetros da água para apoiar o cuidado com reservatórios residenciais.**
+**Acompanhe parâmetros da água no display e no navegador, usando um ESP32.**
 
-![Status: em desenvolvimento](https://img.shields.io/badge/status-em_desenvolvimento-0284C7?style=flat-square)
-![Projeto acadêmico](https://img.shields.io/badge/projeto-acad%C3%AAmico-0F766E?style=flat-square)
-![Escopo: protótipo de bancada](https://img.shields.io/badge/escopo-prot%C3%B3tipo_de_bancada-475569?style=flat-square)
-![C/C++](https://img.shields.io/badge/firmware-C%2FC%2B%2B-00599C?style=flat-square&logo=cplusplus)
+![Status](https://img.shields.io/badge/status-protótipo_de_bancada-0284C7?style=flat-square)
+![C++](https://img.shields.io/badge/firmware-C%2FC%2B%2B-00599C?style=flat-square&logo=cplusplus)
 ![Arduino IDE](https://img.shields.io/badge/ambiente-Arduino_IDE-00878F?style=flat-square&logo=arduino)
-![ESP32](https://img.shields.io/badge/placa-ESP32--WROOM--32-E7352C?style=flat-square&logo=espressif)
-[![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-16A34A?style=flat-square)](LICENSE)
+![ESP32](https://img.shields.io/badge/placa-ESP32-E7352C?style=flat-square&logo=espressif)
+[![Licença MIT](https://img.shields.io/badge/licença-MIT-16A34A?style=flat-square)](LICENSE)
 
-[Sobre](#sobre-o-projeto) · [Funcionalidades](#funcionalidades-planejadas) · [Primeiros passos](#primeiros-passos)· [Frame](#frame) · [Contribuição](#como-contribuir) · [Equipe](#equipe)
+[Comece aqui](docs/COMECE_AQUI.md) · [Entenda o código](docs/COMO_O_CODIGO_FUNCIONA.md) · [Circuito](hardware/README.md) · [Frame](#frame) · [Equipe](#equipe)
 
 </div>
 
----
-
 ## Sobre o projeto
 
-O **Water Tank Monitor** é um projeto acadêmico de um dispositivo de baixo custo para acompanhar **turbidez, pH, condutividade elétrica e temperatura** da água. A proposta é disponibilizar as leituras em um display local e em uma interface acessível pelo navegador do celular, via Wi-Fi.
+O Water Tank Monitor é um projeto acadêmico para acompanhar **pH, turbidez, condutividade elétrica (EC) e temperatura**. A proposta é facilitar a observação de mudanças na água e apoiar a inspeção de reservatórios. O ESP32 coleta os sinais, mostra as informações no OLED e cria uma rede Wi-Fi para consultar o painel pelo celular ou computador.
 
-O projeto busca apoiar a inspeção de caixas d'água residenciais e a limpeza preventiva, tornando alterações nos parâmetros medidos mais fáceis de acompanhar.
+O protótipo já permite testar painel, display e sinais de três potenciômetros. A calibração e a precisão dos sensores reais ainda precisam de ensaios. **O projeto não confirma a potabilidade da água** nem está validado para instalação residencial permanente.
 
-A entrega prevista é um **protótipo de bancada**. A instalação permanente em uma residência dependerá da validação dos sensores, dos materiais, da vedação e das condições de operação.
+## Por onde começar
 
-> **Em desenvolvimento:** há uma demonstração para Wokwi e uma versão de firmware para ensaios com a placa real. Compilar o código não equivale a validar as sondas: calibração, precisão e operação em bancada ainda precisam ser verificadas.
+| Quero… | Guia |
+|---|---|
+| Baixar, instalar e montar minha primeira bancada | **[Comece aqui: passo a passo](docs/COMECE_AQUI.md)** |
+| Entender cada arquivo e a lógica por trás do programa | **[Como o código funciona](docs/COMO_O_CODIGO_FUNCIONA.md)** |
+| Conferir fios, alimentação e componentes | [Projeto elétrico](hardware/README.md) e [lista de materiais](hardware/bom.csv) |
+| Usar o site, o OLED, gráficos e PDF | [Manual do painel](docs/PAINEL.md) |
+| Calibrar e operar sensores reais | [Operação e calibração](docs/OPERACAO.md) |
+| Saber por que cada ferramenta foi escolhida | [Decisões técnicas](docs/DECISOES.md) |
+| Reproduzir testes e conhecer limitações | [Testes e resultados](docs/TESTES.md) |
+| Experimentar a demonstração virtual | [Guia Wokwi](simulation/wokwi/README.md) |
 
-## O que será monitorado
+## O que já está implementado
 
-| Parâmetro | O que permite acompanhar | Como será apresentado |
-| :--- | :--- | :--- |
-| **Turbidez** | Alterações relacionadas à presença de partículas em suspensão. | Indicador relativo, comparado com uma referência de ensaio. |
-| **pH** | Acidez ou alcalinidade da água. | Leitura após calibração e verificação da sonda. |
-| **Condutividade elétrica** | Resposta relacionada aos íons dissolvidos na água. | Valor estimado em µS/cm a 25 °C, após calibração e verificação. |
-| **Temperatura** | Condição térmica da amostra. | Informação auxiliar para interpretar as medições. |
+- **Painel local com tema claro e escuro**, sem aplicativo ou internet.
+- **OLED com quatro formatos fixos:** lista, grade, destaque e gráfico de um parâmetro, escolhidos pelo site.
+- **Gráficos recentes no site e no OLED**, com até 48 leituras, aproximadamente quatro minutos.
+- **Três canais simulados por potenciômetros**, sempre identificados como SIM: pH, turbidez e EC. Temperatura continua sendo lida pelo DS18B20.
+- **Calibração guiada:** captura automática após estabilidade, dois pontos e verificação por terceira referência.
+- **Histórico de médias por minuto**, com capacidade de até 24 horas, e download de **relatório PDF** com gráficos e tabelas.
+- **Preferências persistentes:** senha, tema, formato do OLED, simulação e calibrações sobrevivem ao desligamento.
+- **Estados explícitos:** leitura atual, antiga, simulada, indisponível ou com calibração pendente.
 
-> **Limite do projeto:** o dispositivo fará uma triagem dos parâmetros medidos e **não confirmará a potabilidade da água**. Leituras sem alterações não significam que a água esteja segura para beber. Essa limitação faz parte do escopo definido no documento do projeto.
+O histórico e os pontos dos gráficos ficam em memória temporária: reiniciar a placa os apaga. Alterar modo/calibração também limpa as séries. A coleta continua enquanto há energia, mesmo com o navegador fechado.
 
-## Funcionalidades e estado do projeto
-
-- **Leitura de quatro parâmetros:** turbidez, pH, condutividade elétrica e temperatura.
-- **Painel web local:** consulta das últimas leituras pelo navegador do celular.
-- **Rede Wi-Fi própria:** acesso à rede `WaterTankMonitor`, protegida por senha.
-- **Display no equipamento:** exibição alternada das leituras, do estado do sistema e do tempo desde a medição.
-- **Operação independente do celular:** a coleta e a exibição continuarão enquanto o equipamento estiver alimentado, mesmo com o navegador fechado.
-- **Histórico temporário:** médias de um minuto, limitadas às últimas 24 horas, armazenadas em memória RAM.
-- **Indicação de atualização:** identificação da idade das leituras e de resultados referentes à última amostra.
-- **Tratamento de falhas:** sinalização de medição indisponível, calibração pendente ou alteração detectada.
-- **Persistência de configurações:** armazenamento separado da calibração e das configurações em memória não volátil.
-
-O [firmware de bancada](firmware/WaterTankMonitor/WaterTankMonitor.ino) implementa aquisição, OLED, rede local, painel, sessões de amostra, calibração por dois pontos, faixas experimentais e histórico. A [demonstração Wokwi](simulation/wokwi/README.md) usa controles sintéticos e permanece separada. A integração física ainda está em validação; não se trata de equipamento pronto para instalação residencial.
-
-### Como deverá funcionar
+## Como funciona, em poucas palavras
 
 ```text
-                     Amostras de água
-                            │
-                            ▼
-           Turbidez · pH · Condutividade · Temperatura
-                            │
-                            ▼
-                 Processamento das leituras
-                            │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-         Display local   Painel web    Histórico
-                         via Wi-Fi    temporário
+Sensores ou potenciômetros
+           ↓
+ESP32 lê, interpreta e identifica o estado dos dados
+           ├── OLED: valores ou gráfico
+           ├── Memória: leituras recentes e médias por minuto
+           └── Wi-Fi local → navegador → painel e relatório PDF
 ```
 
-1. O equipamento será alimentado e iniciará a rotina de aquisição.
-2. As leituras válidas serão exibidas no display e disponibilizadas no painel.
-3. Para consultar pelo celular, o usuário se conectará à rede `WaterTankMonitor` e abrirá o endereço IP do equipamento no navegador.
-4. Ao encerrar a consulta, poderá desconectar o celular sem interromper o funcionamento do sistema.
+O firmware em C/C++ controla a placa. HTML, CSS e JavaScript formam o site, que é enviado pelo próprio ESP32. O navegador desenha os gráficos e gera o PDF; não há servidor externo ou serviço de nuvem.
 
-A meta dos ensaios é atualizar o painel e o display a cada **5 segundos**, respeitando o tempo de estabilização de cada sonda.
+| Parâmetro | Significado | Situação na bancada com potenciômetros |
+|---|---|---|
+| pH | Acidez ou alcalinidade. | Valor sintético de 0 a 14. |
+| Turbidez | Alterações associadas a partículas em suspensão. | Indicador relativo de 0 a 100%; não é NTU calibrada. |
+| EC | Condutividade relacionada a íons dissolvidos. | Valor sintético de 0 a 2000 µS/cm. |
+| Temperatura | Condição térmica da amostra. | Valor real do DS18B20; sem sensor válido, fica indisponível. |
 
-### Condições e limites de operação
+Para medições reais, pH e EC usam sessões de amostra; EC exige temperatura de 25 ±0,5 °C. Referências físicas e verificação da montagem são necessárias antes de interpretar os resultados.
 
-| Aspecto | Comportamento previsto |
-| :--- | :--- |
-| **Acesso** | Local, pela rede Wi-Fi do equipamento; sem acesso remoto pela internet. |
-| **Conectividade** | A rede do equipamento não fornecerá internet nem enviará notificações ao celular desconectado. |
-| **Energia** | Sem alimentação elétrica, não haverá monitoramento. |
-| **Histórico** | Será apagado ao reiniciar; calibração e configurações serão preservadas separadamente. |
-| **Referência de tempo** | Tempo decorrido, como “há 10 min”, sem data ou hora de calendário. |
-| **Medições de pH e condutividade** | Inicialmente realizadas em porções separadas da mesma amostra, para evitar interferência elétrica. |
-| **Resultados antigos** | Serão identificados como “última amostra” ou “medição indisponível”, conforme a situação. |
-| **Imersão permanente** | Dependerá de validação específica das sondas e da montagem. |
+## Instalação resumida
 
-## Tecnologias e componentes
+1. Baixe o ZIP em **Code → Download ZIP**, extraia e instale a [Arduino IDE](https://www.arduino.cc/en/software).
+2. Instale **esp32 by Espressif Systems 2.0.17** e as bibliotecas da tabela abaixo. Essa é a referência testada, não a versão mais recente.
+3. Abra [`firmware/WaterTankMonitor/WaterTankMonitor.ino`](firmware/WaterTankMonitor/WaterTankMonitor.ino), mantendo os arquivos `.h` na mesma pasta.
+4. Selecione **ESP32 Dev Module** e a porta USB, compile e carregue o firmware.
+5. No Monitor Serial a **115200 baud**, envie `rede` para consultar senha e IP.
+6. Conecte à rede **WaterTankMonitor** e abra **http://192.168.4.1**. Informe a senha no painel para alterar configurações.
 
-O [projeto elétrico de referência](hardware/README.md) reúne o mapa de conexões, a pinagem, o dimensionamento e a lista de materiais do protótipo. A revisão é preliminar e depende da confirmação dos módulos comprados e de ensaios de bancada.
-
-| Categoria | Definição |
-| :--- | :--- |
-| Linguagens | **C/C++**, com sketches Arduino compilados como C++. O painel embarcado usa HTML, CSS e JavaScript. |
-| Ambiente principal | **Arduino IDE 2.x**, com o pacote **esp32 by Espressif Systems**. |
-| Plataforma | **Arduino Core para ESP32**; versão de referência dos testes de compilação: **2.0.17**. |
-| Controlador | **ESP32-WROOM-32 em placa DevKit**, seleção `ESP32 Dev Module` para a placa compatível. |
-| Comunicação | Wi-Fi local, HTTP/JSON, I²C para o OLED e 1-Wire para temperatura. |
-| Armazenamento | Calibração e senha em **NVS**, via `Preferences`; médias em buffer circular na **RAM**. |
-| Verificação | Compilação, Wokwi, Monitor Serial, multímetro e ensaios com referências. PlatformIO e Wokwi CLI são auxiliares opcionais. |
-| Versionamento | **Git e GitHub**, com revisão e aprovação da equipe antes de publicar alterações. |
-
-### Bibliotecas
-
-| Biblioteca | Versão de referência | Função |
-| :--- | :--- | :--- |
-| Adafruit GFX Library | 1.12.6 | Desenha textos e elementos gráficos. |
-| Adafruit SSD1306 | 2.5.16 | Controla o display OLED. |
-| Adafruit BusIO | 1.17.4 | Dependência das bibliotecas Adafruit para comunicação com dispositivos. |
-| OneWire | 2.3.8 | Implementa o barramento de dados do DS18B20. |
-| DallasTemperature | 4.0.6 | Solicita conversões e interpreta a temperatura do DS18B20. |
-| Wire | Incluída no pacote ESP32 | Comunicação I²C com o display. |
-| WiFi | Incluída no pacote ESP32 | Cria a rede local `WaterTankMonitor`. |
-| WebServer | Incluída no pacote ESP32 | Serve o painel e a API HTTP diretamente na placa. |
-| Preferences | Incluída no pacote ESP32 | Preserva configurações após desligamento. |
-
-As cinco bibliotecas externas já são usadas na demonstração. As três últimas são usadas no firmware real e vêm com o suporte oficial ao ESP32. As dependências mantêm suas próprias licenças.
-
-### Componentes do protótipo
-
-| Componente | Utilização |
-| :--- | :--- |
-| ESP32-WROOM-32 DevKit | Processamento, ADC e Wi-Fi. |
-| Kit analógico/digital de turbidez, 5 V | Entrada analógica de turbidez relativa; a faixa anunciada em NTU exige calibração específica. |
-| PH4502C com eletrodo BNC | Medição de pH após calibração e verificação. |
-| TDS V1.0 com sonda | Entrada usada para estimativa experimental de EC; não fornece EC calibrada automaticamente. |
-| DS18B20 encapsulado, três fios | Temperatura da amostra. |
-| OLED SSD1306 I²C, 0,96", 128×64 | Consulta local. |
-| Fonte isolada de 5 V / 3 A | Alimentação da montagem. |
-| Divisores, filtros, pull-up e desacoplamento | Adequação dos sinais e alimentação; valores na [lista de materiais](hardware/bom.csv). |
-| Protoboards, cabos, conectores e caixa | Montagem e proteção mecânica de bancada. |
-
-Os títulos dos anúncios identificam as famílias dos módulos; a ordem dos pinos e a faixa elétrica da unidade recebida ainda devem ser conferidas. Isso é uma etapa de montagem, não uma escolha de tecnologia pendente.
-
-## Primeiros passos
-
-### Demonstração no Wokwi
-
-![Circuito virtual do Water Tank Monitor no Wokwi](hardware/Circuito%20%282%29.png)
-
-*Montagem no Wokwi: ESP32, OLED, DS18B20 e três controles que representam turbidez, pH e condutividade.*
-
-Na montagem virtual, os controles permitem representar diferentes leituras dos sensores. O botão vermelho foi previsto para demonstrar uma falha de medição. Esta imagem apresenta as conexões.
-
-[Abrir o guia da simulação](simulation/wokwi/README.md). A captura abaixo, fornecida pela equipe, mostra a demonstração exibindo valores simulados; não substitui os testes da versão física.
-
-![Display da demonstração no Wokwi](hardware/Tela%20OLED.png)
-
-### Pré-requisitos
-
-- Git para clonar, ou download do ZIP pelo GitHub.
-- Arduino IDE 2.x e suporte oficial ao ESP32.
-- As cinco bibliotecas externas da tabela acima.
-- Para a placa real: cabo USB de dados e driver compatível com o conversor USB da DevKit, se o sistema não reconhecer a porta.
-- Para ensaios: componentes, multímetro e padrões de calibração adequados.
-
-### 1. Clonar o repositório
+O [guia completo](docs/COMECE_AQUI.md) explica cada clique, download, ligação e primeiro teste. Para obter pelo Git:
 
 ```bash
 git clone https://github.com/Jvscopel27/Water-Tank-monitor.git
 cd Water-Tank-monitor
 ```
 
-### 2. Preparar o ambiente
+## Tecnologias e componentes
 
-Na Arduino IDE, adicione esta URL às URLs adicionais do Gerenciador de Placas:
+O ambiente principal é **Arduino IDE 2.x**, com Arduino Core para ESP32. `Wire`, `WiFi`, `WebServer` e `Preferences` já vêm no pacote da placa. Instale as cinco bibliotecas externas pelo Gerenciador de Bibliotecas:
 
-```text
-https://espressif.github.io/arduino-esp32/package_esp32_index.json
-```
+| Biblioteca | Versão de referência | Função |
+|---|---|---|
+| Adafruit GFX Library | 1.12.6 | Textos, formas e gráficos. |
+| Adafruit SSD1306 | 2.5.16 | Controle do OLED. |
+| Adafruit BusIO | 1.17.4 | Comunicação usada pelas bibliotecas Adafruit. |
+| OneWire | 2.3.8 | Protocolo do DS18B20. |
+| DallasTemperature | 4.0.6 | Leitura de temperatura. |
 
-Instale **esp32 by Espressif Systems**, selecionando **2.0.17** para reproduzir o ambiente de referência. Instale as cinco bibliotecas externas pelo Gerenciador de Bibliotecas, com as versões listadas. Para uma atualização do pacote ESP32, repita os testes antes de adotá-la. [Instalação oficial](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html)
+| Componente | Conexão principal |
+|---|---|
+| ESP32-WROOM-32 DevKit | Controlador e Wi-Fi. |
+| OLED SSD1306 I²C 0,96", 128 × 64 | SDA 21, SCL 22, alimentação 3V3/GND. |
+| DS18B20 de três fios | GPIO 4, com pull-up de 4,7 kΩ. |
+| PH4502C com eletrodo BNC | GPIO 35, com adequação elétrica. |
+| Módulo de turbidez analógico, 5 V | GPIO 34, com adequação elétrica. |
+| TDS V1.0 com sonda | GPIO 32; estimativa experimental de EC. |
+| Três potenciômetros para os testes | Centrais em 35/34/32; laterais em 3V3 e GND. |
 
-Abra `firmware/WaterTankMonitor/WaterTankMonitor.ino`, selecione **ESP32 Dev Module** e a porta da placa. Clique em **Verificar** para compilar.
+**Não aplique 5 V nos GPIOs.** Monte com a alimentação desligada e confira o [circuito de referência](hardware/README.md), divisores e tensões antes de substituir potenciômetros por sensores. O título comercial do módulo não garante a pinagem da unidade recebida.
 
-### 3. Montar e configurar o protótipo
+### Demonstração virtual
 
-Siga o [guia elétrico](hardware/README.md). GPIOs: temperatura **4**, pH **35**, turbidez **34**, TDS **32**, SDA **21** e SCL **22**. Confira os divisores e as tensões antes de conectar as entradas analógicas.
+![Circuito virtual do Water Tank Monitor no Wokwi](hardware/Circuito%20%282%29.png)
 
-Grave inicialmente a DevKit isolada, alimentada somente pelo USB. No Monitor Serial a **115200 baud**, registre a senha gerada para a rede e o IP. Desconecte o USB antes de montar e alimentar o circuito pela fonte externa.
+A demonstração Wokwi usa um sketch separado para ilustrar entradas, OLED e falhas. Ela não contém todo o painel do firmware de bancada nem valida sensores reais. Siga o [guia da simulação](simulation/wokwi/README.md).
 
-### 4. Executar e acessar o painel
+## Testes e próximos passos
 
-Conecte o celular à rede **WaterTankMonitor**, usando a senha obtida durante a preparação. Abra no navegador o IP informado pela placa — por padrão, `http://192.168.4.1`. Não é necessário instalar aplicativo nem ter internet.
+Foram registrados testes de compilação, lógica de medições, painel em navegador, geração de PDF e bancada com ESP32/OLED/potenciômetros. As verificações incluem gráficos, preferências após reinício, cancelamento da captura automática e identificação de dados simulados. Consulte as condições e os resultados no [registro de testes](docs/TESTES.md).
 
-No painel, consulte leituras, idade dos dados e histórico. A área de configuração exige a senha da rede. Depois da estabilização das sondas, o comando `amostra 300` inicia uma sessão de cinco minutos; `parar` encerra a sessão. Sem sessão, pH e EC ficam identificados como última amostra ou indisponíveis.
+Ainda são necessários ensaios com sondas e referências físicas, avaliação de precisão, interferências, operação por 24 horas e validação mecânica/elétrica da instalação. A existência de uma funcionalidade no código não significa que a medição física já foi validada.
 
-Antes de usar os resultados, siga o [manual de calibração e operação](docs/OPERACAO.md). Sem calibração verificada, o firmware mostra os milivolts do ADC e sinaliza a pendência. Não há coeficientes de sensores inventados no código.
-
-## Testes e validação
-
-Consulte o [plano e registro de validação](docs/TESTES.md), que separa compilação, verificações de lógica, simulação e testes físicos. Há um cenário Wokwi preparado para a demonstração e verificações de interpolação, limites e idade das amostras.
-
-A validação de bancada prevista no documento do projeto inclui:
-
-- Testar cada sensor e o display individualmente.
-- Calibrar e verificar as medições, registrando pelo menos três repetições por condição.
-- Conferir o acesso ao painel e a desconexão e reconexão do celular sem interromper o equipamento.
-- Verificar a indicação de leituras antigas, alterações e falhas de sensores.
-- Testar a perda de energia, a preservação da calibração e o reinício do histórico vazio.
-- Executar um ensaio de 24 horas da eletrônica e do display sem celular conectado, registrando separadamente as sessões com sondas.
-
-Os resultados deverão registrar as condições de ensaio, as referências utilizadas e as limitações observadas. O ensaio de 24 horas não comprova a adequação das sondas à imersão permanente.
-
-## Etapas do projeto
-
-Sequência planejada de entregas, sem indicação de conclusão:
-
-- [ ] Consolidar requisitos e revisar o esquema elétrico.
-- [ ] Montar e testar sensores e display individualmente.
-- [x] Preparar o código do painel acessível por Wi-Fi.
-- [ ] Calibrar os sensores e integrar leituras reais.
-- [x] Preparar histórico, estados do sistema e tratamento de falhas no firmware.
-- [ ] Validar a operação independente do celular e o comportamento após reinício.
-- [ ] Finalizar a montagem de bancada e registrar os ensaios.
-- [ ] Entregar código, manual, relatório de calibração e demonstração.
-
-**Período previsto no planejamento:** 5 de outubro a 1º de dezembro de 2026.
 
 ## Frame
 ![Carcaça inicial do modelo do produto](frame/prototipo.png)
