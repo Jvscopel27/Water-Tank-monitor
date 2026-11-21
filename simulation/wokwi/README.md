@@ -1,3 +1,5 @@
+> Demonstração histórica independente: pode conter temperatura. Não corresponde ao firmware atual de três canais. Para montar o projeto real, use [Comece aqui](../../docs/COMECE_AQUI.md).
+
 # Simulação do Water Tank Monitor no Wokwi
 
 ![Montagem do circuito virtual no Wokwi](../../hardware/Circuito%20%282%29.png)

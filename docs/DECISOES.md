@@ -1,3 +1,5 @@
+> Registro de decisões de revisões anteriores. A revisão de 21/11/2026 removeu temperatura e sessões obrigatórias, mantendo EC em µS/cm sem compensação. Consulte [arquitetura atual](COMO_O_CODIGO_FUNCIONA.md).
+
 # Decisões técnicas e ferramentas
 
 O [guia do código](COMO_O_CODIGO_FUNCIONA.md) explica a implementação passo a passo. O [manual do painel](PAINEL.md) detalha gráficos, configurações persistentes, calibração guiada e PDF.
