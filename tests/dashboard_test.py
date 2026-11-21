@@ -20,7 +20,7 @@ out.mkdir(parents=True, exist_ok=True)
 html = (ROOT / 'firmware/WaterTankMonitor/Panel.h').read_text(encoding='utf-8').split('R"HTML(', 1)[1].split(')HTML";', 1)[0]
 report = (ROOT / 'firmware/WaterTankMonitor/Report.h').read_text(encoding='utf-8').split('R"JS(', 1)[1].split(')JS";', 1)[0]
 interactions = (ROOT / 'firmware/WaterTankMonitor/Interactions.h').read_text(encoding='utf-8').split('R"JS(', 1)[1].split(')JS";', 1)[0]
-settings = dict(dark=0, layout=0, focus=0, rotation=0, inverse=0, contrast=160, demo_mask=7,
+settings = dict(dark=0, layout=0, focus=1, rotation=0, inverse=0, contrast=160, demo_mask=7,
                 temperature_offset=0, oled_ready=True, calibrations=[dict(configured=False, verified=False, first_captured=False) for _ in range(3)])
 snapshot = dict(uptime_ms=3600000, session_remaining_s=0, assessment='DEMONSTRACAO: dados de teste, nao sao medicoes reais.',
                 readings=[dict(value=v, mv=m, state='simulado' if i else 'sensor_indisponivel', simulated=i>0, stable=True, stability_samples=4, stability_span=2 if i else 0, age_ms=2000 if i else None)
@@ -53,11 +53,11 @@ def route(r):
     else:r.fulfill(status=404,body='Not found')
 
 with sync_playwright() as p:
-    browser=p.chromium.launch(executable_path=r'C:\Program Files\Google\Chrome\Application\chrome.exe', headless=True)
+    browser=p.chromium.launch(headless=True)
     page=browser.new_page(viewport=dict(width=1320,height=1000),device_scale_factor=1)
     errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
     page.route('http://test.local/**',route);page.goto('http://test.local/')
-    page.wait_for_selector('.card');assert page.locator('.card').count()==4
+    page.wait_for_selector('.card');assert page.locator('.card').count()==3
     page.screenshot(path=str(out/'dashboard-light.png'),full_page=False)
     page.locator('#theme').click();assert 'dark' in page.locator('body').get_attribute('class')
     page.locator('#key').fill('test-password')
@@ -76,7 +76,8 @@ with sync_playwright() as p:
     page.evaluate('scrollTo(0,0)');page.screenshot(path=str(out/'dashboard-dark.png'))
     page.locator('#screen').screenshot(path=str(out/'oled-controls.png'))
     page.locator('#referenceConfirmed').check();assert page.locator('#capture1').is_disabled()
-    page.locator('#calChannel').select_option('temp');assert page.locator('#temperatureWizard').is_visible()
+    assert page.locator('#calChannel option[value=temp]').count()==0
+    assert 'Temperatura' not in page.locator('body').inner_text()
     page.locator('#calChannel').select_option('ph')
     # Auto capture waits for stability and sends the final command only once.
     page.locator('#key').fill('test-password')
@@ -100,6 +101,14 @@ with sync_playwright() as p:
     offline=False;page.evaluate('update()');page.wait_for_function('!busy && connected')
     assert page.locator('#layout').input_value()=='3'
     page.locator('#restoreScreen').click();page.wait_for_function('!writing');assert page.locator('#layout').input_value()==str(settings['layout'])
+    page.locator('#calChannel').select_option('ec')
+    snapshot['readings'][3].update(simulated=False,state='calibracao_pendente')
+    page.evaluate('update()');page.wait_for_function('!busy')
+    page.locator('#referenceConfirmed').check();page.locator('#ref1').fill('1413')
+    page.locator('#capture1').click();page.wait_for_function('!writing && autoCapture !== null')
+    page.evaluate('autoCapture.started -= 21000; checkAuto()')
+    page.wait_for_function('!writing && !autoChecking && autoCapture === null')
+    assert commands.count('capturar ec 1 1413')==1
     snapshot['readings'][1].update(simulated=True,state='simulado',stable=True,stability_samples=4)
     page.locator('#charts').screenshot(path=str(out/'live-chart.png'))
     page.locator('#history').click();page.wait_for_selector('#rows tr');assert page.locator('#rows tr').count()==60
@@ -108,6 +117,8 @@ with sync_playwright() as p:
     reader=PdfReader(out/'report-sample.pdf');assert len(reader.pages)==4
     text='\n'.join(x.extract_text() for x in reader.pages)
     assert 'SIM' in text and 'POTABILIDADE' in text and 'Condutividade' in text
+    assert 'Temperatura' not in text and 'Temp.' not in text
+    assert 'µS/cm' in text
     pdf=fitz.open(out/'report-sample.pdf')
     for i in [0,1,3]:pdf[i].get_pixmap(matrix=fitz.Matrix(1.4,1.4)).save(str(out/f'report-page-{i+1}.png'))
     # Empty and maximum-size histories must create valid, complete PDF files.

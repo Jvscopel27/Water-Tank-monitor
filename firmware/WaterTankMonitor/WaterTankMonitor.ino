@@ -7,8 +7,6 @@
 #include <Preferences.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 #include <esp_timer.h>
 #include <esp_system.h>
 #include "Measurement.h"
@@ -21,20 +19,18 @@ using namespace wtm;
 
 constexpr uint8_t ANALOG_PINS[] = {35, 34, 32}; // pH, turbidez, EC
 constexpr const char* CHANNELS[] = {"ph", "turb", "ec"};
+constexpr const char* CALIBRATION_KEYS[] = {"ph", "turb", "ec"};
 constexpr unsigned HISTORY_SIZE = 1440;
 constexpr uint64_t SAMPLE_PERIOD = 5000;
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
-OneWire oneWire(4);
-DallasTemperature thermometer(&oneWire);
-DeviceAddress temperatureAddress;
 WebServer server(80);
 Preferences preferences;
 Calibration calibrations[3];
-Reading readings[4]; // temperatura, pH, turbidez, EC
+Reading readings[4]; // reservado, pH, turbidez, condutividade
 Minute history[HISTORY_SIZE], bucket;
 unsigned historyHead = 0, historyCount = 0;
-uint64_t sessionUntil = 0, nextSample = 0, conversionReady = 0, bucketStart = 0, nextDisplay = 0;
-bool converting = false, sensorFound = false, displayReady = false, storageReady = false;
+uint64_t sessionUntil = 0, nextSample = 0, bucketStart = 0, nextDisplay = 0;
+bool displayReady = false, storageReady = false;
 unsigned displayPage = 0, outsideStreak = 0;
 String serialLine, apPassword, commandReply;
 bool serialOverflow = false;
@@ -42,7 +38,7 @@ bool demoChannels[3] = {false, false, false};
 Settings settings;
 Stability stableInputs[4];
 CalibrationDraft drafts[3];
-float rawTemperature = DEVICE_DISCONNECTED_C;
+// Slot zero is reserved for API/history compatibility; it is never acquired.
 TrendPoint trend[TREND_SIZE];
 unsigned trendHead = 0, trendCount = 0;
 
@@ -58,7 +54,7 @@ bool allowedReference(int index, float y) {
   return finite(y) && (index == 0 ? y >= 0 && y <= 14 : index == 1 ? y >= 0 && y <= 100 : y >= 0 && y <= 100000);
 }
 bool validCalibration(int i, const Calibration& c) {
-  return c.version == 1 && validPoints(c.mv1, c.y1, c.mv2, c.y2) &&
+  return c.version == 1 && validThird(c) && (!c.third || (i == 0 && allowedReference(i, c.y3))) && validPoints(c.mv1, c.y1, c.mv2, c.y2) &&
     allowedReference(i, c.y1) && allowedReference(i, c.y2) &&
     (!c.limits || (allowedReference(i, c.low) && allowedReference(i, c.high) && c.low < c.high));
 }
@@ -68,6 +64,7 @@ bool saveSettings(const Settings& next) {
     reply("ERRO: configuracao nao salva na memoria da placa"); return false;
   }
   settings = next;
+  if (settings.focus == 0) settings.focus = 1;
   for (unsigned i = 0; i < 3; ++i) demoChannels[i] = (settings.demoMask & (1 << i)) != 0;
   nextDisplay = 0;
   return true;
@@ -84,13 +81,14 @@ void sendSettings() {
     json += "{\"configured\":" + String(validCalibration(i, c) ? "true" : "false") +
       ",\"verified\":" + String(c.verified ? "true" : "false") + ",\"first_captured\":" + String(drafts[i].first && uptime() - drafts[i].stamp <= 1800000ULL ? "true" : "false") +
       ",\"mv1\":" + String(c.mv1, 2) + ",\"ref1\":" + String(c.y1, 2) +
-      ",\"mv2\":" + String(c.mv2, 2) + ",\"ref2\":" + String(c.y2, 2) + "}";
+      ",\"mv2\":" + String(c.mv2, 2) + ",\"ref2\":" + String(c.y2, 2) + ",\"third\":" + String(c.third ? "true" : "false") +
+      ",\"mv3\":" + String(c.mv3, 3) + ",\"ref3\":" + String(c.y3, 2) + "}";
   }
   json += "]}";
   server.sendHeader("Cache-Control", "no-store"); server.send(200, "application/json", json);
 }
 bool persist(int i, const Calibration& c) {
-  if (!storageReady || preferences.putBytes(CHANNELS[i], &c, sizeof(c)) != sizeof(c)) {
+  if (!storageReady || preferences.putBytes(CALIBRATION_KEYS[i], &c, sizeof(c)) != sizeof(c)) {
     reply("ERRO: configuracao nao salva; verifique NVS"); return false;
   }
   calibrations[i] = c;
@@ -109,20 +107,17 @@ float readMillivolts(uint8_t pin) {
 }
 bool isCurrent(unsigned i, uint64_t now) {
   return current(now, readings[i].stamp, readings[i].hasValue) &&
-    strcmp(readings[i].state, "atual") == 0 &&
-    ((i != 1 && i != 3) || sessionActive(now));
+    strcmp(readings[i].state, "atual") == 0;
 }
 const char* readingState(unsigned i, uint64_t now) {
   if (simulatedChannel(i) && readings[i].hasValue)
     return current(now, readings[i].stamp, true) ? "simulado" : "simulado_antigo";
-  if ((i == 1 || i == 3) && !sessionActive(now))
-    return readings[i].hasValue ? "ultima_amostra" : "sem_sessao";
   if (strcmp(readings[i].state, "atual") == 0 && !isCurrent(i, now)) return "leitura_antiga";
   return readings[i].state;
 }
 const char* assessment(uint64_t now) {
-  if (anyDemo()) return "DEMONSTRAÇÃO: canais SIMULADOS usam potenciômetros. Histórico e relatório identificam esses valores; não são medições de água. Temperatura real, sem simulação.";
-  for (unsigned i = 0; i < 4; ++i) if (!isCurrent(i, now)) return "Medição indisponível, antiga ou calibração pendente.";
+  if (anyDemo()) return "DEMONSTRAÇÃO: canais SIMULADOS usam potenciômetros. Histórico e relatório identificam esses valores; não são medições de água. Condutividade sem compensação térmica.";
+  for (unsigned i = 1; i < 4; ++i) if (!isCurrent(i, now)) return "Medição indisponível, antiga ou calibração pendente.";
   for (const auto& c : calibrations) if (!c.limits) return "Faixas experimentais pendentes; sem classificação.";
   if (outsideStreak >= 3) return "Alteração persistente detectada — verificar água, sensores e reservatório.";
   if (outsideStreak) return "Alteração em observação; aguardando persistência.";
@@ -130,7 +125,7 @@ const char* assessment(uint64_t now) {
 }
 void updateAssessment(uint64_t now) {
   bool outside = false;
-  for (unsigned i = 0; i < 4; ++i) if (!isCurrent(i, now)) { outsideStreak = 0; return; }
+  for (unsigned i = 1; i < 4; ++i) if (!isCurrent(i, now)) { outsideStreak = 0; return; }
   for (unsigned i = 0; i < 3; ++i) {
     const auto& c = calibrations[i];
     if (!c.limits) { outsideStreak = 0; return; }
@@ -147,13 +142,6 @@ void closeMinute(uint64_t now) {
   bucket = Minute{}; bucketStart = now;
 }
 void collect(uint64_t now) {
-  auto& temp = readings[0];
-  rawTemperature = sensorFound ? thermometer.getTempC(temperatureAddress) : DEVICE_DISCONNECTED_C;
-  const float t = rawTemperature == DEVICE_DISCONNECTED_C ? rawTemperature : rawTemperature + settings.temperatureOffset;
-  if (finite(t) && t != DEVICE_DISCONNECTED_C && t >= -55 && t <= 125) {
-    stableInputs[0].add(rawTemperature, now);
-    temp.value = t; temp.hasValue = true; temp.stamp = now; temp.state = "atual";
-  } else { temp.state = "sensor_indisponivel"; stableInputs[0] = Stability{}; }
   for (unsigned i = 0; i < 3; ++i) {
     auto& r = readings[i + 1];
     r.mv = readMillivolts(ANALOG_PINS[i]);
@@ -167,15 +155,10 @@ void collect(uint64_t now) {
       continue;
     }
     const auto& c = calibrations[i];
-    if ((i == 0 || i == 2) && !sessionActive(now)) { r.state = "sem_sessao"; continue; }
     if (r.mv < 150 || r.mv > 2300) { r.state = "fora_faixa_adc"; continue; }
     if (!validCalibration(i, c) || !c.verified) { r.state = "calibracao_pendente"; continue; }
     if (!between(r.mv, c.mv1, c.mv2)) { r.state = "fora_faixa_calibrada"; continue; }
-    // Sem coeficiente universal para o TDS: EC somente em ensaio a 25 ± 0,5 °C.
-    if (i == 2 && (!isCurrent(0, now) || absValue(t - 25) > 0.5f)) {
-      r.state = "ec_exige_25C"; continue;
-    }
-    r.value = interpolate(r.mv, c.mv1, c.y1, c.mv2, c.y2);
+    r.value = calibratedValue(r.mv, c);
     r.hasValue = true; r.stamp = now; r.state = "atual";
   }
   updateAssessment(now);
@@ -257,7 +240,7 @@ void drawDisplay(uint64_t now) {
   display.ssd1306_command(SSD1306_SETCONTRAST); display.ssd1306_command(settings.contrast);
   display.clearDisplay(); display.setTextSize(1); display.setCursor(0, 0);
   display.println("WATER TANK"); display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
-  const char* labels[] = {"Temp C", "pH", "Turb %", "EC uS/cm"};
+  const char* labels[] = {"", "pH", "Turb %", "EC uS/cm"};
   auto value = [&](unsigned i) -> String {
     return (isCurrent(i, now) || (simulatedChannel(i) && current(now, readings[i].stamp, readings[i].hasValue))) ? String(readings[i].value, i == 1 ? 2 : 1) : String("--");
   };
@@ -294,15 +277,15 @@ void drawDisplay(uint64_t now) {
     display.setCursor(0, 15); display.print(labels[i]); if (simulatedChannel(i)) display.print(" SIM");
     display.setCursor(0, 29); display.setTextSize(2); display.println(value(i)); display.setTextSize(1);
   } else if (settings.layout == 1) {
-    for (unsigned i = 0; i < 4; ++i) {
-      int x = (i % 2) * 65, y = 14 + (i / 2) * 20;
+    for (unsigned i = 1; i < 4; ++i) {
+      int x = ((i - 1) % 2) * 65, y = 14 + ((i - 1) / 2) * 20;
       display.setCursor(x, y); display.print(labels[i]); if (simulatedChannel(i)) display.print("*");
       display.setCursor(x, y + 9); display.print(value(i));
     }
   } else {
-    for (unsigned i = 0; i < 4; ++i) {
-      display.setCursor(0, 14 + i * 10); display.print(labels[i]);
-      display.setCursor(62, 14 + i * 10); display.print(value(i)); if (simulatedChannel(i)) display.print("*");
+    for (unsigned i = 1; i < 4; ++i) {
+      display.setCursor(0, 14 + (i - 1) * 12); display.print(labels[i]);
+      display.setCursor(62, 14 + (i - 1) * 12); display.print(value(i)); if (simulatedChannel(i)) display.print("*");
     }
   }
   display.setCursor(0, 56); display.print(anyDemo() ? "*SIM: nao mede agua" : "Potab. nao confirmada");
@@ -316,10 +299,16 @@ void help() {
   Serial.println("cal <ph|turb|ec> <mV1> <referencia1> <mV2> <referencia2>");
   Serial.println("validar <ph|turb|ec> (somente apos verificar referencia independente)");
   Serial.println("faixa <ph|turb|ec> <min> <max> (limites experimentais, nao sanitarios)");
-  Serial.println("A calibracao usa mV NO GPIO, apos divisor. EC: validar a 25 +/-0,5 C.");
+  Serial.println("A calibracao usa mV NO GPIO, apos divisor. EC em uS/cm, sem compensacao termica.");
 }
 void command(const String& line) {
   char name[12] = {}; float a, b, c, d; unsigned seconds; int end = 0;
+  if (line == "calinfo") {
+  Serial.printf("PH_CURVE third=%d verified=%d p1=%.3f/%.2f p2=%.3f/%.2f p3=%.3f/%.2f\n",
+    calibrations[0].third, calibrations[0].verified, calibrations[0].mv1, calibrations[0].y1,
+    calibrations[0].mv2, calibrations[0].y2, calibrations[0].mv3, calibrations[0].y3);
+    return;
+  }
   if (line.startsWith("ui ")) {
     int dark, layout, focus, rotation, inverse, contrast;
     if (sscanf(line.c_str(), "ui %d %d %d %d %d %d %n", &dark, &layout, &focus, &rotation, &inverse, &contrast, &end) != 6 ||
@@ -331,7 +320,6 @@ void command(const String& line) {
   }
   if (line.startsWith("preparar ")) {
     if (sscanf(line.c_str(), "preparar %11s %n", name, &end) != 1 || end != (int)line.length()) { reply("ERRO: canal invalido"); return; }
-    if (strcmp(name, "temp") == 0) { stableInputs[0] = Stability{}; reply("Aguardando temperatura estavel."); return; }
     int i = channelIndex(name);
     if (i < 0 || demoChannels[i]) { reply("ERRO: desligue a simulacao do canal antes de calibrar"); return; }
     stableInputs[i + 1] = Stability{};
@@ -343,7 +331,6 @@ void command(const String& line) {
     int i = channelIndex(name);
     if (i < 0 || demoChannels[i] || !allowedReference(i, a) || (point != 1 && point != 2)) { reply("ERRO: canal, referencia ou modo invalido"); return; }
     if (!stableInputs[i + 1].stable(uptime(), 10)) { reply("ERRO: aguarde quatro leituras estaveis (variacao ate 10 mV)"); return; }
-    if (i == 2 && (!isCurrent(0, uptime()) || absValue(readings[0].value - 25) > 0.5f)) { reply("ERRO: EC exige temperatura real de 25 +/-0.5 C"); return; }
     float mv = stableInputs[i + 1].mean();
     if (!between(mv, 150, 2300)) { reply("ERRO: ADC fora de 150..2300 mV; confira divisor e multimetro"); return; }
     if (point == 1) {
@@ -363,21 +350,10 @@ void command(const String& line) {
     const auto& cal = calibrations[i]; float mv = stableInputs[i + 1].mean();
     if (!finite(b) || b <= 0 || b > absValue(cal.y2 - cal.y1) * 0.2f || !between(a, cal.y1, cal.y2) ||
         absValue(a - cal.y1) < 0.0001f || absValue(a - cal.y2) < 0.0001f || !between(mv, cal.mv1, cal.mv2)) { reply("ERRO: referencia intermediaria e tolerancia positiva ate 20% do intervalo exigidas"); return; }
-    if (i == 2 && (!isCurrent(0, uptime()) || absValue(readings[0].value - 25) > 0.5f)) { reply("ERRO: EC exige 25 +/-0.5 C"); return; }
-    float error = absValue(interpolate(mv, cal.mv1, cal.y1, cal.mv2, cal.y2) - a);
+    float error = absValue(calibratedValue(mv, cal) - a);
     if (error > b) { reply("ERRO: resultado fora da tolerancia. Revise referencias, curva e montagem."); return; }
     auto next = cal; next.verified = true;
     if (persist(i, next)) reply("Verificacao dentro da tolerancia informada. Curva habilitada."); return;
-  }
-  if (line.startsWith("tempcal ")) {
-    if (sscanf(line.c_str(), "tempcal %f %n", &a, &end) != 1 || end != (int)line.length() || !between(a, -10, 85) ||
-        !isCurrent(0, uptime()) || !stableInputs[0].stable(uptime(), 0.3f)) { reply("ERRO: temperatura real estavel e referencia -10..85 C necessarias"); return; }
-    Settings next = settings; next.temperatureOffset = a - stableInputs[0].mean();
-    if (absValue(next.temperatureOffset) > 5) { reply("ERRO: correcao superior a 5 C; confira sensor e referencia"); return; }
-    if (saveSettings(next)) {
-      readings[0] = Reading{}; historyHead = historyCount = 0; bucket = Minute{}; bucketStart = uptime(); trendHead = trendCount = 0;
-      reply("Correcao de temperatura salva. Confira em outra temperatura com termometro de referencia.");
-    } return;
   }
   if (line.startsWith("demo ")) {
     char channel[12] = {}, mode[4] = {}; int consumed = 0;
@@ -424,12 +400,10 @@ void command(const String& line) {
     Serial.println("SSID: WaterTankMonitor"); Serial.println("Senha: " + apPassword);
     Serial.print("IP: "); Serial.println(WiFi.softAPIP()); return;
   }
-  if (line == "parar") { sessionUntil = 0; outsideStreak = 0; reply("Sessao encerrada"); return; }
+  if (line == "parar") { sessionUntil = 0; outsideStreak = 0; reply("Marcador de sessao encerrado; aquisicao continua"); return; }
   if (sscanf(line.c_str(), "amostra %u %n", &seconds, &end) == 1 && end == (int)line.length() && seconds >= 30 && seconds <= 1800) {
     sessionUntil = uptime() + seconds * 1000ULL; outsideStreak = 0;
-    // Impedir que a nova sessão faça uma leitura anterior parecer atual.
-    readings[1].state = readings[3].state = "aguardando_nova_amostra";
-    reply("Sessao iniciada. Sondas devem estar estabilizadas."); return;
+    reply("Marcador de sessao iniciado; aquisicao sempre continua."); return;
   }
   end = 0;
   if (sscanf(line.c_str(), "cal %11s %f %f %f %f %n", name, &a, &b, &c, &d, &end) == 5 && end == (int)line.length()) {
@@ -475,11 +449,19 @@ void setup() {
   Settings loadedSettings;
   if (storageReady && preferences.isKey("ui_settings") && preferences.getBytesLength("ui_settings") == sizeof(loadedSettings) &&
       preferences.getBytes("ui_settings", &loadedSettings, sizeof(loadedSettings)) == sizeof(loadedSettings) && validSettings(loadedSettings)) settings = loadedSettings;
+  if (settings.focus == 0) settings.focus = 1;
   for (unsigned i = 0; i < 3; ++i) demoChannels[i] = (settings.demoMask & (1 << i)) != 0;
   for (int i = 0; i < 3; ++i) {
     Calibration loaded;
-    if (storageReady && preferences.isKey(CHANNELS[i]) && preferences.getBytesLength(CHANNELS[i]) == sizeof(loaded) &&
-        preferences.getBytes(CHANNELS[i], &loaded, sizeof(loaded)) == sizeof(loaded) && validCalibration(i, loaded)) calibrations[i] = loaded;
+    bool ok = false;
+    if (storageReady && preferences.getBytesLength(CALIBRATION_KEYS[i]) == sizeof(LegacyCalibration)) {
+      LegacyCalibration legacy;
+      ok = preferences.getBytes(CALIBRATION_KEYS[i], &legacy, sizeof(legacy)) == sizeof(legacy);
+      static_cast<LegacyCalibration&>(loaded) = legacy;
+    } else if (storageReady && preferences.getBytesLength(CALIBRATION_KEYS[i]) == sizeof(loaded)) {
+      ok = preferences.getBytes(CALIBRATION_KEYS[i], &loaded, sizeof(loaded)) == sizeof(loaded);
+    }
+    if (ok && validCalibration(i, loaded)) calibrations[i] = loaded;
   }
   if (storageReady) apPassword = preferences.getString("ap_password", "");
   if (apPassword.length() < 8 || apPassword.length() > 63) {
@@ -494,7 +476,6 @@ void setup() {
   if (displayReady) { display.setTextSize(1); display.setTextColor(SSD1306_WHITE); display.setTextWrap(false); }
   else Serial.println("OLED indisponivel; aquisicao e web continuam");
   analogReadResolution(12); analogSetAttenuation(ADC_11db);
-  thermometer.begin(); thermometer.setWaitForConversion(false);
   WiFi.mode(WIFI_AP);
   if (!WiFi.softAP("WaterTankMonitor", apPassword.c_str())) Serial.println("ERRO: Wi-Fi indisponivel");
   server.on("/", HTTP_GET, []() { server.sendHeader("Cache-Control", "no-store"); server.send_P(200, "text/html; charset=utf-8", PANEL); });
@@ -524,11 +505,6 @@ void setup() {
 void loop() {
   server.handleClient(); readCommands();
   const uint64_t now = uptime(); closeMinute(now);
-  if (!converting && now >= nextSample) {
-    sensorFound = thermometer.getAddress(temperatureAddress, 0);
-    if (sensorFound) { thermometer.setResolution(temperatureAddress, 12); thermometer.requestTemperatures(); }
-    converting = true; conversionReady = now + 800; nextSample = now + SAMPLE_PERIOD;
-  }
-  if (converting && now >= conversionReady) { converting = false; collect(now); }
+  if (now >= nextSample) { nextSample = now + SAMPLE_PERIOD; collect(now); }
   drawDisplay(now); delay(1);
 }

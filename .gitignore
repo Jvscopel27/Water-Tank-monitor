@@ -4,3 +4,7 @@
 **/serial.log
 **/oled-test.png
 build/
+
+.venv/
+__pycache__/
+*.pyc

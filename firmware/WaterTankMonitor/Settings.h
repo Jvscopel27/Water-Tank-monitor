@@ -3,7 +3,7 @@
 #include "Measurement.h"
 struct Settings {
   uint32_t version = 1;
-  uint8_t demoMask = 0, dark = 0, layout = 0, focus = 0;
+  uint8_t demoMask = 0, dark = 0, layout = 0, focus = 1;
   uint8_t rotation = 0, inverse = 0, contrast = 160, reserved = 0;
   float temperatureOffset = 0;
 };

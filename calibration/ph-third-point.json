@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-20",
+  "channel": "ph",
+  "sample": "agua filtrada",
+  "assigned_ph": 6.3,
+  "assignment": "valor experimental definido explicitamente pelo usuario",
+  "gpio": 35,
+  "millivolts_samples": [
+    1427.1,
+    1423.5,
+    1425.2,
+    1425.7
+  ],
+  "millivolts_mean": 1425.375,
+  "span_mv": 3.599999999999909,
+  "stable": true,
+  "status": "gravado no ESP32; curva experimental de tres pontos habilitada",
+  "interpolation": "linear por trechos",
+  "endpoints": [
+    {
+      "millivolts": 1699.969,
+      "ph": 3.1
+    },
+    {
+      "millivolts": 1253.516,
+      "ph": 8.3
+    }
+  ]
+}

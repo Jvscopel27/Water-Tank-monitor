@@ -4,7 +4,7 @@
 const char REPORT_SCRIPT[] PROGMEM = R"JS('use strict';
 function buildReport(snapshot,history,generated){
   const pages=[],W=595,H=842,ink=[.07,.19,.26],teal=[.02,.48,.50],muted=[.32,.42,.48],pale=[.92,.96,.96];
-  const labels=['Temperatura','pH','Turbidez relativa','Condutividade'],units=['°C','','% rel.','µS/cm'];
+  const labels=['','pH','Turbidez relativa','Condutividade'],units=['','','% rel.','µS/cm'];
   let ops=[];
   function esc(t){return String(t).replace(/[–—−]/g,'-').replace(/…/g,'...').replace(/[^\x20-\xff]/g,'?').replace(/([\\()])/g,'\\$1')}
   function rect(x,y,w,h,c){ops.push(c.join(' ')+' rg '+x+' '+(H-y-h)+' '+w+' '+h+' re f')}
@@ -17,10 +17,10 @@ function buildReport(snapshot,history,generated){
   text('Gerado em '+when+' (relógio do navegador)',36,142,9,muted);text('ESP32 ligado há '+Math.floor(snapshot.uptime_ms/60000)+' min | '+history.length+' médias de um minuto',36,158,9,muted);
   rect(36,176,523,48,[1,.95,.83]);text('PROTÓTIPO EXPERIMENTAL - POTABILIDADE NÃO CONFIRMADA',48,195,10,ink,true);text('SIM indica potenciômetro. Valores simulados não são medições da água.',48,212,9,ink);
   text('01 / LEITURAS NA EXPORTAÇÃO',36,253,11,teal,true);
-  snapshot.readings.forEach((r,i)=>{const x=36+i%2*268,y=270+Math.floor(i/2)*106;rect(x,y,255,94,pale);text(labels[i]+(r.simulated?' / SIM':' / REAL'),x+12,y+20,10,teal,true);text(fmt(r.value,i)+' '+units[i],x+12,y+52,23,ink,true);text(r.state.replaceAll('_',' '),x+12,y+72,9,muted);text(r.age_ms===null?'Sem amostra válida':'Idade da amostra: '+Math.floor(r.age_ms/1000)+' s',x+12,y+85,8,muted)});
+  snapshot.readings.forEach((r,i)=>{if(i===0)return;const x=36+(i-1)%2*268,y=270+Math.floor((i-1)/2)*106;rect(x,y,255,94,pale);text(labels[i]+(r.simulated?' / SIM':' / REAL'),x+12,y+20,10,teal,true);text(fmt(r.value,i)+' '+units[i],x+12,y+52,23,ink,true);text(r.state.replaceAll('_',' '),x+12,y+72,9,muted);text(r.age_ms===null?'Sem amostra válida':'Idade da amostra: '+Math.floor(r.age_ms/1000)+' s',x+12,y+85,8,muted)});
   text('02 / VISÃO DO HISTÓRICO',36,510,11,teal,true);
-  for(let i=0;i<4;i++){
-    const x=36+i%2*268,y=526+Math.floor(i/2)*100;
+  for(let i=1;i<4;i++){
+    const x=36+(i-1)%2*268,y=526+Math.floor((i-1)/2)*100;
     const valid=history.filter(r=>r.mean[i]!==null&&Number.isFinite(r.mean[i]));const vals=valid.map(r=>r.mean[i]);
     text(labels[i],x,y,10,ink,true);
     if(!vals.length){text('Sem médias disponíveis neste canal.',x,y+25,9,muted);continue}
@@ -35,8 +35,8 @@ function buildReport(snapshot,history,generated){
   text('Histórico em RAM. Reinício e mudanças de modo/calibração apagam registros.',36,760,8,muted);
   for(let start=0;start<history.length;start+=27){
     newPage();text('Registro detalhado',36,87,23,ink,true);text('Médias de um minuto | SIM = simulado | -- = sem leitura válida',36,109,9,muted);
-    rect(36,125,523,28,teal);['Há (min)','Temp. °C','pH','Turb. %','EC µS/cm'].forEach((t,i)=>text(t,46+i*104,143,9,[1,1,1],true));
-    history.slice(start,start+27).forEach((r,j)=>{let y=154+j*22;if(j%2===0)rect(36,y,523,22,pale);const cells=[(r.age_ms/60000).toFixed(1),...r.mean.map((v,i)=>fmt(v,i)+(v!==null&&(r.simulated_mask&(1<<i))?' SIM':''))];cells.forEach((t,i)=>text(t,46+i*104,y+14,9,ink))});
+    rect(36,125,523,28,teal);['Há (min)','pH','Turb. %','EC µS/cm'].forEach((t,i)=>text(t,46+i*130,143,9,[1,1,1],true));
+    history.slice(start,start+27).forEach((r,j)=>{let y=154+j*22;if(j%2===0)rect(36,y,523,22,pale);const cells=[(r.age_ms/60000).toFixed(1),...r.mean.slice(1).map((v,j)=>fmt(v,j+1)+(v!==null&&(r.simulated_mask&(1<<(j+1)))?' SIM':''))];cells.forEach((t,i)=>text(t,46+i*130,y+14,9,ink))});
     text('Células sem média não foram substituídas por zero. Intervalos sem dados podem existir.',36,775,8,muted);
   }
   pages.push(ops.join('\n'));

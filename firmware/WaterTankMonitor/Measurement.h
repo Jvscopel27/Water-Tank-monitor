@@ -21,12 +21,27 @@ constexpr bool current(uint64_t now, uint64_t stamp, bool hasValue) {
 constexpr unsigned nextIndex(unsigned index, unsigned capacity) {
   return (index + 1) % capacity;
 }
-struct Calibration {
+struct LegacyCalibration {
   uint32_t version = 1;
   float mv1 = 0, y1 = 0, mv2 = 0, y2 = 0;
   float low = 0, high = 0;
   bool verified = false, limits = false;
 };
+struct Calibration : LegacyCalibration {
+  float mv3 = 0, y3 = 0;
+  bool third = false;
+};
+inline bool validThird(const Calibration& c) {
+  return !c.third || (between(c.mv3, c.mv1, c.mv2) &&
+    absValue(c.mv3 - c.mv1) >= 20 && absValue(c.mv3 - c.mv2) >= 20 &&
+    between(c.y3, c.y1, c.y2) && c.y3 != c.y1 && c.y3 != c.y2);
+}
+inline float calibratedValue(float mv, const Calibration& c) {
+  if (!c.third) return interpolate(mv, c.mv1, c.y1, c.mv2, c.y2);
+  return between(mv, c.mv1, c.mv3)
+    ? interpolate(mv, c.mv1, c.y1, c.mv3, c.y3)
+    : interpolate(mv, c.mv3, c.y3, c.mv2, c.y2);
+}
 struct Reading {
   float value = 0, mv = 0;
   uint64_t stamp = 0;

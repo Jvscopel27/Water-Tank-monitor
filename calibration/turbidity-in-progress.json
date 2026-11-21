@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-20",
+  "reference": "agua filtrada",
+  "relative_percent": 0,
+  "observed_mv_range": [
+    1785.4,
+    1791.7
+  ],
+  "status": "concluida por media autorizada; ver turbidity-official.json",
+  "draft_valid_minutes": 30,
+  "notes": "Valor exato da media mantido pelo firmware; intervalo acima corresponde as leituras observadas. Calibracao anterior permanece ativa ate concluir os dois pontos.",
+  "coffee_attempt": {
+    "assigned_relative_percent": 100,
+    "observed_mv_range": [
+      855.2,
+      1449.0
+    ],
+    "saved": false,
+    "reason": "Firmware recusou captura: aguarde quatro leituras estaveis (variacao ate 10 mV)",
+    "user_confirmed": "sensor e recipiente parados, sem bolhas"
+  }
+}

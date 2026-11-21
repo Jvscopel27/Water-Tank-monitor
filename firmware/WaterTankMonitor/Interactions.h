@@ -16,10 +16,10 @@ function drawTrend(){
   const x=p=>old===last?(left+right)/2:left+(old-p.age_ms)/(old-last)*(right-left),y=v=>bottom-(v-lo)/(hi-lo)*(bottom-top);
   for(let k=0;k<5;k++){const py=top+k*(bottom-top)/4;ctx.strokeStyle=grid;ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(right,py);ctx.stroke();ctx.fillText((hi-k*(hi-lo)/4).toFixed(i===3?0:1),2,py+4)}
   ctx.strokeStyle=accent;ctx.lineWidth=2;ctx.fillStyle=accent;let prev=null;
-  for(const row of rows){const v=row.values[i];if(v===null){prev=null;continue}const pt=[x(row),y(v)];if(prev&&prev.age-row.age_ms<=15000){ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(pt[0],pt[1]);ctx.stroke()}else{ctx.beginPath();ctx.arc(pt[0],pt[1],2,0,Math.PI*2);ctx.fill()}prev={x:pt[0],y:pt[1],age:row.age_ms}}
+  for(const row of rows){const v=row.values[i];if(v===null){prev=null;continue}const pt=[x(row),y(v)];if(prev&&prev.age-row.age_ms<=15000){ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(pt[0],pt[1]);ctx.stroke()}prev={x:pt[0],y:pt[1],age:row.age_ms}}
   ctx.fillStyle=ink;ctx.fillText('há '+age(old),left,215);const end='há '+age(last);ctx.fillText(end,right-ctx.measureText(end).width,215);
   const sim=rows.some(p=>(p.simulated_mask&(1<<i))&&p.values[i]!==null);
-  $('chartSummary').textContent=names[i]+' · '+(sim?'SIMULADO':'SENSOR REAL')+' · mín. '+low.toFixed(2)+' / máx. '+high.toFixed(2)+' '+units[i]+' · '+vals.length+' pontos'+(!connected?' · DADOS ANTIGOS':'');
+  $('chartSummary').textContent=names[i]+' · '+(sim?'SIMULADO':'SENSOR REAL')+' · último valor: '+vals[vals.length-1].toFixed(2)+' '+units[i]+' · variação (máx. − mín.): '+(high-low).toFixed(2)+' '+units[i]+(!connected?' · DADOS ANTIGOS':'');
 }
 function drawOledGraph(ctx,i){
   const vals=trendData.map(p=>p.values[i]).filter(v=>v!==null);
@@ -36,10 +36,10 @@ async function startAuto(kind){
   if(autoCapture||writing){toast('Conclua ou cancele a captura em andamento.');return}
   await action(async()=>{
     const channel=confirmed();if(!$('key').value)throw Error('Informe a senha da placa.');
-    const reference=num(kind==='temp'?'tempRef':kind==='verify'?'verifyRef':'ref'+kind);
+    const reference=num(kind==='verify'?'verifyRef':'ref'+kind);
     const tolerance=kind==='verify'?num('tolerance'):null;
-    const index={temp:0,ph:1,turb:2,ec:3}[channel],max={temp:85,ph:14,turb:100,ec:100000}[channel];
-    if(reference<(channel==='temp'?-10:0)||reference>max)throw Error('Referência fora da faixa do canal.');
+    const index={ph:1,turb:2,ec:3}[channel],max={ph:14,turb:100,ec:100000}[channel];
+    if(reference<0||reference>max)throw Error('Referência fora da faixa do canal.');
     if(tolerance!==null&&tolerance<=0)throw Error('Informe uma tolerância positiva.');
     if(index>0&&kind===2&&!saved.calibrations[index-1].first_captured)throw Error('Capture primeiro o ponto 1.');
     if(kind==='verify'&&!saved.calibrations[index-1].configured)throw Error('Capture os dois pontos antes de verificar.');
@@ -55,18 +55,17 @@ async function checkAuto(){
   if($('calChannel').value!==task.channel||!$('referenceConfirmed').checked||latest.readings[task.index].simulated){cancelCapture('Preparação ou modo alterado. Inicie novamente quando estiver pronto.');return}
   const r=latest.readings[task.index],remaining=Math.max(0,Math.ceil((20000-elapsed)/1000));
   $('autoStatus').textContent=remaining?'Captura automática: aguarde pelo menos '+remaining+' s. Não troque a referência.':'Captura automática: aguardando estabilidade e condições do sensor.';
-  const t=latest.readings[0];
-  if(elapsed<20000||!r.stable||(task.index>0&&(r.mv<150||r.mv>2300))||(task.index===0&&(r.value===null||r.state!=='atual'))||(task.index===3&&(t.value===null||t.state!=='atual'||Math.abs(t.value-25)>.5)))return;
+  if(elapsed<20000||!r.stable||(task.index>0&&(r.mv<150||r.mv>2300)))return;
   if(writing)return;autoChecking=true;autoCapture=null;$('cancelAuto').hidden=true;
-  const cmd=task.kind==='temp'?'tempcal '+task.reference:task.kind==='verify'?'verificar '+task.channel+' '+task.reference+' '+task.tolerance:'capturar '+task.channel+' '+task.kind+' '+task.reference;
+  const cmd=task.kind==='verify'?'verificar '+task.channel+' '+task.reference+' '+task.tolerance:'capturar '+task.channel+' '+task.kind+' '+task.reference;
   await action(async()=>{try{const result=await command(cmd);$('autoStatus').textContent=result+(task.kind===1?' Próximo passo: enxágue, coloque a segunda referência e inicie o ponto 2.':task.kind===2?' Próximo passo: use uma terceira referência independente.':'');toast(result)}catch(e){$('autoStatus').textContent='Captura não confirmada: '+e.message+' Confira o estado antes de repetir.';throw e}});
   autoChecking=false;calState();
 }
 function initInteractions(){
   $('chartChannel').onchange=drawTrend;window.addEventListener('resize',drawTrend);
   $('cancelAuto').onclick=()=>cancelCapture();
-  $('capture1').onclick=()=>startAuto(1);$('capture2').onclick=()=>startAuto(2);$('verify').onclick=()=>startAuto('verify');$('tempCal').onclick=()=>startAuto('temp');
-  ['ref1','ref2','verifyRef','tolerance','tempRef'].forEach(id=>$(id).addEventListener('input',()=>cancelCapture('Referência alterada; inicie a captura novamente.')));
+  $('capture1').onclick=()=>startAuto(1);$('capture2').onclick=()=>startAuto(2);$('verify').onclick=()=>startAuto('verify');
+  ['ref1','ref2','verifyRef','tolerance'].forEach(id=>$(id).addEventListener('input',()=>cancelCapture('Referência alterada; inicie a captura novamente.')));
   $('calChannel').addEventListener('change',()=>cancelCapture());$('referenceConfirmed').addEventListener('change',()=>{if(!$('referenceConfirmed').checked)cancelCapture()});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelCapture('Captura cancelada porque a página ficou em segundo plano.');});
 }
