@@ -1,6 +1,6 @@
 # Calibração experimental do protótipo
 
-Firmware substituído em 20/11/2026, com autorização do proprietário. A versão atual não contém Telegram. Backup privado completo anterior: `build/pre-replacement-2026-11-20/full-flash.bin` (não versionar; contém configurações privadas).
+Firmware substituído em 20/11/2026.
 
 pH: vinagre 1699,969 mV → 3,1; água filtrada 1425,375 mV → 6,3; bicarbonato 1253,516 mV → 8,3. Referências caseiras estimadas/atribuídas pelo usuário. Interpolação linear por trechos, usando mV no GPIO 35 após divisor de dois resistores de 6,8 kΩ. Não mudar offset ou divisor sem recalibrar.
 
