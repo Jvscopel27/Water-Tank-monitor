@@ -97,6 +97,13 @@ Ao registrar resultados, identifique claramente dados simulados, leituras reais 
 
 Para dúvidas sobre o projeto, utilize as [issues do repositório](https://github.com/Jvscopel27/Water-Tank-monitor/issues).
 
+Primeiro aparece um dia bem ensolarado e uma pessoa correndo na rua(camera de longe). Depois a pessoa chega em casa correndo, extremamente cansada e suada. Com pressa, ela pega um copo de água para beber. Ao tomar o primeiro gole, faz uma expressão de nojo e cospe a água imediatamente.
+Em seguida, entra um corte rápido mostrando essa mesma ação repetida várias vezes no estilo meme/comédia: a pessoa bebendo e cuspindo, com reações cada vez mais dramáticas.
+Corta e a pessoa sobe a escada para ir até a laje da casa. Ela abre a tampa da caixa d'água e olha para o interior. A câmera mostra o interior da caixa com a água totalmente suja, turva e nojenta.
+No clímax da cena, ao enfiar a cabeça para enxergar melhor, a pessoa perde o equilíbrio e cai acidentalmente para dentro da caixa d'água (finge).
+obs: faz que vai cair várias vezes.
+
+
 ## Licença
 
 Este projeto está licenciado sob a **Licença MIT**. Consulte o arquivo [LICENSE](LICENSE) para conhecer os termos.
